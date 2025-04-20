@@ -1,0 +1,15 @@
+ETAPE 1 :
+ - création type t_date
+	choix de faire 3 sous truc en int car plus pratique et date dit en général de manière 1/1/2000
+
+ - décommenté //int coutMaintenance
+
+ - choix de créer un getter pour chaque sous unité de t_date un pour le jour le mois l'année.
+ - pour setter choix de créer 3 en définissant d'abord l'année (les 25 dernières) puis le mois pour finir par le jour. 
+   
+
+ETAPE 2 :
+ - importation de stdbool.h afin de faire fonction de comparaison
+ - reprise de la fonction swap et tri_selection_liste en les modifiant légèrement pour adapter au nouveau type etc...
+
+//2 mai rendu du projet || oral le 5/6 mai 
