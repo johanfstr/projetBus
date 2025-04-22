@@ -194,6 +194,64 @@ void sauvegarderLignes(TlisteStation ligne, Tbus monBus) {
 }
 
 
+// Fonction permettant de construire une ligne de bus en reprenant les stations de deux
+// autres. Le départ sera celui de la première et le terminus sera celui de la seconde.
+TlisteStation fusionnerLignes(TlisteStation ligne1, TlisteStation ligne2) {
+    TlisteStation nouvelleLigne;
+    initListe(&nouvelleLigne);
+
+    // Ajouter toutes les stations de la première ligne (sauf la dernière)
+    TlisteStation temp1 = ligne1;
+    while (temp1 && temp1->suiv) {  // on garde tout sauf le dernier
+        Tstation *station = temp1->pdata;
+        nouvelleLigne = ajoutEnFin(nouvelleLigne, station);
+        temp1 = temp1->suiv;
+    }
+
+    // Ajouter toutes les stations de la seconde ligne (on inclut la dernière ici)
+    TlisteStation temp2 = ligne2;
+    while (temp2) {
+        Tstation *station = temp2->pdata;
+        nouvelleLigne = ajoutEnFin(nouvelleLigne, station);
+        temp2 = temp2->suiv;
+    }
+
+    return nouvelleLigne;
+}
+
+
+TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer) {
+    TlisteStation precedent = NULL;
+    TlisteStation courant = ligne;
+
+    while (courant != NULL) {
+        Tstation *station = courant->pdata;
+
+        if (station->arret_ou_troncon == ARRET && station->idStation == idStationASupprimer) {
+            if (precedent == NULL) {
+                // On supprime la tête
+                ligne = courant->suiv;
+            } else {
+                precedent->suiv = courant->suiv;
+            }
+
+            free(station);  // libérer la mémoire de la station
+            free(courant);  // libérer la cellule
+            printf("Station avec ID %d supprimée.\n", idStationASupprimer);
+            return ligne;
+        }
+
+        precedent = courant;
+        courant = courant->suiv;
+    }
+
+    printf("Station avec ID %d non trouvée.\n", idStationASupprimer);
+    return ligne;
+}
+
+
+
+
 
 
 

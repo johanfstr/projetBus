@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
         TlisteStation ligne1 = chargerLignes();
         TlisteStation ligne2 = creeLigneDeBus2();
         TlisteStation ligne3 = creeLigneDeBus3();
+        TlisteStation ligne4 = fusionnerLignes(ligne2, ligne3); // construire une ligne de bus en reprenant les stations de deux lignes
 
         //création d'un (seul) bus
         Tbus bus1 = creeBus(1,ligne1);
@@ -94,7 +95,7 @@ int main(int argc, char* argv[])
                 deplaceBus(bus1, getSensParcours(bus1), &incXDeplSpriteBus1, &incYDeplSpriteBus1);
 
 
-                //afficheCoordonneesBus( bus1 );  //utile?
+                afficheCoordonneesBus( bus1 );  //utile?
 
                 const Uint8* pKeyStates = SDL_GetKeyboardState(NULL);
                 //les touches sont lues en Qwerty
@@ -125,6 +126,12 @@ int main(int argc, char* argv[])
 
                         printf("\nTouche 3, Bus au départ de la ligne 3\n");
                         busSurStation(bus1, ligne3, depart_vers_arrivee);
+                        Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus( bus1 ), getPosYBus( bus1 ), getIdFrame(frame));
+                }
+                if ( pKeyStates[SDL_SCANCODE_4] ){
+
+                        printf("\nTouche 3, Bus au départ de la ligne 3\n");
+                        busSurStation(bus1, ligne4, depart_vers_arrivee);
                         Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus( bus1 ), getPosYBus( bus1 ), getIdFrame(frame));
                 }
                 if ( pKeyStates[SDL_SCANCODE_ESCAPE] ){
