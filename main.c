@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
         TlisteStation ligne2 = creeLigneDeBus2();
         TlisteStation ligne3 = creeLigneDeBus3();
         TlisteStation ligne4 = fusionnerLignes(ligne2, ligne3); // construire une ligne de bus en reprenant les stations de deux lignes
-        TlisteStation ligne5 = supprimerStation(ligne3, 2); // supprimer une station avec son id
+        //TlisteStation ligne5 = supprimerStation(ligne3, 2); // supprimer une station avec son id
         //TlisteStation ligne6 = rendreLigneCirculaire(ligne3);
 
 
@@ -140,13 +140,13 @@ int main(int argc, char* argv[])
                 if ( pKeyStates[SDL_SCANCODE_5] ){
 
                         printf("\nTouche 3, Bus au départ de la ligne 3\n");
-                        busSurStation(bus1, ligne5, depart_vers_arrivee);
+                        //busSurStation(bus1, ligne5, depart_vers_arrivee);
                         Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus( bus1 ), getPosYBus( bus1 ), getIdFrame(frame));
                 }
                 if ( pKeyStates[SDL_SCANCODE_C] ){
 
                         printf("\nTouche 3, Bus au départ de la ligne 3\n");
-                        //deplacerBusCirculairement(bus1);
+                        supprimerStation(3);
                         Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus(bus1), getPosYBus(bus1), getIdFrame(frame));
                 }
                 if ( pKeyStates[SDL_SCANCODE_ESCAPE] ){

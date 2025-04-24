@@ -63,169 +63,6 @@ Tstation *creeTroncon(int idLigneBus, Tstation* depart, Tstation *arrivee, int c
 }
 
 
-int lignesBus() {
-    FILE *f = fopen("Stations_et_lignesDeBus.data", "w");
-    if (!f) {
-        printf("Erreur crÈation fichier\n");
-        return 1;
-    }
-
-    fprintf(f, "ARRET;10;10;Charles de Gaulle;1\n");
-    fprintf(f, "ARRET;300;400;Jules Ferry;2\n");
-    fprintf(f, "TRONCON;1;1;2;412;412\n");
-    fprintf(f, "ARRET;10;410;Jacques Brel;3\n");
-    fprintf(f, "TRONCON;1;2;3;40;160\n");
-    fprintf(f, "ARRET;200;350;Saint Exupery;4\n");
-    fprintf(f, "TRONCON;1;3;4;45;200\n");
-    fprintf(f, "ARRET;500;410;Stalingrad;5\n");
-    fprintf(f, "TRONCON;1;4;5;40;160\n");
-
-    fclose(f);
-    printf("Fichier crÈÈ avec succËs.\n");
-    return 0;
-}
-
-
-
-
-
-TlisteStation chargerLignes(Tbus monBus) {
-    FILE *f = fopen("Stations_et_lignesDeBus.data", "r");
-    TlisteStation newLigne;
-    initListe(&newLigne);
-    char ligne[256];
-    Tstation *tabStations[100] = {NULL};  // Table díindexation des stations par ID
-
-    int idStationBus = -1;
-
-    if (!f) {
-        printf("Erreur ouverture fichier\n");
-        return newLigne;
-    }
-
-    while (fgets(ligne, sizeof(ligne), f)) {
-        if (strncmp(ligne, "ARRET", 5) == 0) {
-            int x, y, id;
-            char nom[100];
-            sscanf(ligne, "ARRET;%d;%d;%[^;];%d", &x, &y, nom, &id);
-
-            Tstation *arret = creeArret(x, y, nom, id);
-            tabStations[id] = arret;
-            newLigne = ajoutEnFin(newLigne, arret);
-        }
-        else if (strncmp(ligne, "TRONCON", 7) == 0) {
-            int idLigne, idDep, idArr, distance, duree;
-            sscanf(ligne, "TRONCON;%d;%d;%d;%d;%d", &idLigne, &idDep, &idArr, &distance, &duree);
-
-            Tstation *dep = tabStations[idDep];
-            Tstation *arr = tabStations[idArr];
-
-            if (dep != NULL && arr != NULL) {
-                Tstation *troncon = creeTroncon(idLigne, dep, arr, distance, duree);
-                newLigne = ajoutEnFin(newLigne, troncon);
-            } else {
-                printf("Erreur : station %d ou %d introuvable pour le tronÁon.\n", idDep, idArr);
-            }
-        }
-        else if (strncmp(ligne, "BUS", 3) == 0) {
-            sscanf(ligne, "BUS;%d", &idStationBus);
-        }
-    }
-
-    fclose(f);
-
-    // Positionnement du bus si la station de dÈpart est trouvÈe
-    if (idStationBus != -1) {
-        TlisteStation temp = newLigne;
-        while (temp != NULL) {
-            Tstation *s = temp->pdata;
-            if (getTypeNoeud(s) == ARRET && getIdStation(s) == idStationBus) {
-                setActualStation(monBus, temp);
-                setPosXBus(monBus, getPosXStation(s));
-                setPosYBus(monBus, getPosYStation(s));
-                break;
-            }
-            temp = temp->suiv;
-        }
-    }
-
-    return newLigne;
-}
-
-
-
-void sauvegarderLignes(TlisteStation ligne, Tbus monBus) {
-    FILE *f = fopen("Stations_et_lignesDeBus.data", "w");
-    if (!f) {
-        printf("Erreur ouverture fichier en Ècriture\n");
-        return;
-    }
-    // Sauvegarde de la position du bus
-    TlisteStation posBus = getActualStation(monBus);
-    if (posBus && posBus->pdata) {
-        fprintf(f, "BUS;%d\n", getIdStation(posBus->pdata));
-    } else {
-        printf("Position du bus inconnue ou invalide\n");
-    }
-
-    fclose(f);
-}
-
-
-// Fonction permettant de construire une ligne de bus en reprenant les stations de deux
-// autres. Le dÈpart sera celui de la premiËre et le terminus sera celui de la seconde.
-TlisteStation fusionnerLignes(TlisteStation ligne1, TlisteStation ligne2) {
-    TlisteStation nouvelleLigne;
-    initListe(&nouvelleLigne);
-
-    // Ajouter toutes les stations de la premiËre ligne (sauf la derniËre)
-    TlisteStation temp1 = ligne1;
-    while (temp1 && temp1->suiv) {  // on garde tout sauf le dernier
-        Tstation *station = temp1->pdata;
-        nouvelleLigne = ajoutEnFin(nouvelleLigne, station);
-        temp1 = temp1->suiv;
-    }
-
-    // Ajouter toutes les stations de la seconde ligne (on inclut la derniËre ici)
-    TlisteStation temp2 = ligne2;
-    while (temp2) {
-        Tstation *station = temp2->pdata;
-        nouvelleLigne = ajoutEnFin(nouvelleLigne, station);
-        temp2 = temp2->suiv;
-    }
-
-    return nouvelleLigne;
-}
-
-
-TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer) {
-    TlisteStation precedent = NULL;
-    TlisteStation courant = ligne;
-
-    while (courant != NULL) {
-        Tstation *station = courant->pdata;
-
-        if (station->arret_ou_troncon == ARRET && station->idStation == idStationASupprimer) {
-            if (precedent == NULL) {
-                // On supprime la tÍte
-                ligne = courant->suiv;
-            } else {
-                precedent->suiv = courant->suiv;
-            }
-
-            free(station);  // libÈrer la mÈmoire de la station
-            free(courant);  // libÈrer la cellule
-            printf("Station avec ID %d supprimÈe.\n", idStationASupprimer);
-            return ligne;
-        }
-
-        precedent = courant;
-        courant = courant->suiv;
-    }
-
-    printf("Station avec ID %d non trouvÈe.\n", idStationASupprimer);
-    return ligne;
-}
 
 
 
@@ -246,7 +83,7 @@ TlisteStation creeLigneDeBus1(){
 
     initListe(&newLigne);
 
-    //creation en mÈmoire des stations et troncons
+    //creation en m√©moire des stations et troncons
     dep = creeArret(10,10,"Charles de Gaulle",1);
     arr = creeArret(300,400,"Jules Ferry",2);
 
@@ -254,8 +91,8 @@ TlisteStation creeLigneDeBus1(){
     troncon = creeTroncon(1, dep, arr, distance, distance);
 
 
-    //ajout de ces stations et troncons dans la liste doublement chainÈe  (champ pdata)
-    newLigne = ajoutEnFin(newLigne, dep);  //donc la tÍte)
+    //ajout de ces stations et troncons dans la liste doublement chain√©e  (champ pdata)
+    newLigne = ajoutEnFin(newLigne, dep);  //donc la t√™te)
     newLigne = ajoutEnFin(newLigne, troncon);
     newLigne = ajoutEnFin(newLigne, arr);
 
@@ -284,7 +121,7 @@ TlisteStation creeLigneDeBus2(){
 
     initListe(&newLigne);
 
-    //creation en mÈmoire des stations et troncons
+    //creation en m√©moire des stations et troncons
     dep = creeArret(10,100,"Republique",6);
     arr = creeArret(30,300,"Jules Ferry",7);
 
@@ -292,8 +129,8 @@ TlisteStation creeLigneDeBus2(){
     troncon = creeTroncon(1, dep, arr, distance, distance);
 
 
-    //ajout de ces stations et troncons dans la liste doublement chainÈe  (champ pdata)
-    newLigne = ajoutEnFin(newLigne, dep);  //donc la tÍte)
+    //ajout de ces stations et troncons dans la liste doublement chain√©e  (champ pdata)
+    newLigne = ajoutEnFin(newLigne, dep);  //donc la t√™te)
     newLigne = ajoutEnFin(newLigne, troncon);
     newLigne = ajoutEnFin(newLigne, arr);
 
@@ -321,7 +158,7 @@ TlisteStation creeLigneDeBus3(){
 
     initListe(&newLigne);
 
-    //creation en mÈmoire des stations et troncons
+    //creation en m√©moire des stations et troncons
     dep = creeArret(150,10,"Clemenceau",11);
     arr = creeArret(300,100,"Montmartre",12);
 
@@ -329,8 +166,8 @@ TlisteStation creeLigneDeBus3(){
     troncon = creeTroncon(1, dep, arr, distance, distance);
 
 
-    //ajout de ces stations et troncons dans la liste doublement chainÈe  (champ pdata)
-    newLigne = ajoutEnFin(newLigne, dep);  //donc la tÍte)
+    //ajout de ces stations et troncons dans la liste doublement chain√©e  (champ pdata)
+    newLigne = ajoutEnFin(newLigne, dep);  //donc la t√™te)
     newLigne = ajoutEnFin(newLigne, troncon);
     newLigne = ajoutEnFin(newLigne, arr);
 
@@ -362,7 +199,7 @@ TlisteStation getNextStation( TlisteStation l){
     else {
             if (getTypeNoeud(getPtrData(l))==ARRET) {
                     if (ligneBusVide( getNextCell(l) )) return NULL;  //nous sommes sur un terminus
-                    else return getNextCell( getNextCell( l ) );  //le prochain arret est dans 2 cellules dans la liste, la cellule suivaante Ètant un TRONCON
+                    else return getNextCell( getNextCell( l ) );  //le prochain arret est dans 2 cellules dans la liste, la cellule suivaante √©tant un TRONCON
             }
             else return getNextCell( l );  //si on est sur un TRONCON alors la prochaine cellule est la prochaine station (ARRET)
     }
@@ -372,7 +209,7 @@ TlisteStation getNextTroncon( TlisteStation l){
     if (ligneBusVide(l)) return NULL;
     else {
             if (getTypeNoeud(getPtrData(l))==ARRET) {
-                return getNextCell(l);  //la prochaine cellule est un TRONCON, peut Ítre Ègale ‡ NULL si on est sur un terminus
+                return getNextCell(l);  //la prochaine cellule est un TRONCON, peut √™tre √©gale √† NULL si on est sur un terminus
             }
             else{
                     //printf("\n(getNextTroncon) erreur algo, on est deja sur un troncon");
@@ -386,7 +223,7 @@ TlisteStation getPreviousStation( TlisteStation l){
     else {
             if (getTypeNoeud(getPtrData(l))==ARRET) {
                     if (ligneBusVide( getPrevCell(l) )) return NULL;  //nous sommes sur un terminus
-                    return getPrevCell( getPrevCell( l ) );  //le prochain arret est dans 2 cellules dans la liste, la cellule suivaante Ètant un TRONCON
+                    return getPrevCell( getPrevCell( l ) );  //le prochain arret est dans 2 cellules dans la liste, la cellule suivaante √©tant un TRONCON
             }
             else return getPrevCell( l );  //si on est sur un TRONCON alors la prochaine cellule est la prochaine station (ARRET)
     }
@@ -408,14 +245,14 @@ void deplaceBus(Tbus myBus, TsensParcours sens_deplacement, int *incXSprite, int
     TlisteStation dest;
     int xdep, ydep, xarr, yarr, pas;
     float ratio;
-    pas = 2;  //Èquivalent au parametre d'erreur dans le tracÈ de Segment de Bresenham
+    pas = 2;  //√©quivalent au parametre d'erreur dans le trac√© de Segment de Bresenham
     //https://fr.wikipedia.org/wiki/Algorithme_de_trac%C3%A9_de_segment_de_Bresenham
 
 
     if (sens_deplacement == depart_vers_arrivee) dest = getNextStation(getActualStation(myBus));
         else dest = getPreviousStation(getActualStation(myBus));
 
-    //par dÈfaut: pas de dÈplacement du bus
+    //par d√©faut: pas de d√©placement du bus
     *incXSprite = 0; *incYSprite = 0;
 
     //si un prochain arret existe?
@@ -424,31 +261,31 @@ void deplaceBus(Tbus myBus, TsensParcours sens_deplacement, int *incXSprite, int
     }
     else //s'il existe:
     {
-        //soit on est arrivÈ, soit on est en cours de trajet
-        //rÈcupÈration des coordonnÈes
+        //soit on est arriv√©, soit on est en cours de trajet
+        //r√©cup√©ration des coordonn√©es
         xdep = getPosXBus(myBus);
         ydep = getPosYBus(myBus);
         xarr = getPosXListeStation(dest);
         yarr = getPosYListeStation(dest);
 
-        //sommes-nous arrivÈs?
+        //sommes-nous arriv√©s?
         if ((abs(xdep-xarr)<=pas) && (abs(ydep-yarr)<=pas)){
-            //alors mise ‡ jour de la station actuelle du bus
+            //alors mise √† jour de la station actuelle du bus
             setActualStation( myBus, dest );
             printf("\nLe Bus id%d arrive sur la station id%d %s",getIdBus(myBus),getIdStation(getPtrData(getActualStation(myBus))),getNomStation(getPtrData(getActualStation(myBus))));
         }
         else{
-            //sinon on calcule les offsets de dÈplacements pour la boucle main qui rÈalise les affichages
+            //sinon on calcule les offsets de d√©placements pour la boucle main qui r√©alise les affichages
             ratio = (float)(abs(yarr-ydep))/(float)(abs(xarr-xdep)); //div euclydienne
 
-            //algo de Bresenham "simplifiÈ de faÁon ad hoc" et non optimisÈ (‡ cause des floats)
+            //algo de Bresenham "simplifi√© de fa√ßon ad hoc" et non optimis√© (√† cause des floats)
             if (xarr>xdep) *incXSprite = pas;
             else if (xarr<xdep) *incXSprite = -pas;
 
-            if (yarr>ydep) *incYSprite = (int)((float)(pas) * ratio);             //pour un dÈplacement proportionnel en Y selon Y/X
+            if (yarr>ydep) *incYSprite = (int)((float)(pas) * ratio);             //pour un d√©placement proportionnel en Y selon Y/X
             else if (yarr<ydep) *incYSprite = (int)((float)(-pas) * ratio);
 
-            //remmarque: si xarr==ydep alors *incXSprite reste ‡ 0, idem en Y
+            //remmarque: si xarr==ydep alors *incXSprite reste √† 0, idem en Y
 
             //maj des coord du bus
             setPosXBus(myBus, getPosXBus(myBus) + *incXSprite);
@@ -469,7 +306,7 @@ void setPositionSurLaLigneDeBus( Tbus myBus, TlisteStation myStation);
 
 void busSurStation( Tbus myBus, TlisteStation myStation, TsensParcours sens){
 
-    //Exemple encapsulation: on a prÈfÈrÈ les fonctions setteurs ‡ un accÈs direct aux champs
+    //Exemple encapsulation: on a pr√©f√©r√© les fonctions setteurs √† un acc√©s direct aux champs
 
     setPositionSurLaLigneDeBus( myBus, myStation);
     //myBus->positionSurLaLigneDeBus = myStation;  //interdit
@@ -483,7 +320,7 @@ void busSurStation( Tbus myBus, TlisteStation myStation, TsensParcours sens){
     setPosYBus( myBus, getPosYListeStation( myStation ) );
     //myBus->posYBus = getPosYListeStation( myStation );
 
-    //idem : on passe ci-dessous par les getteurs et non par un accÈs direct via les champs
+    //idem : on passe ci-dessous par les getteurs et non par un acc√©s direct via les champs
     printf("\nBus id%d est en (x = %d, y = %d) sur la ligne %d, station %s", getIdBus(myBus), getPosXBus(myBus), getPosYBus(myBus), getIdLigneActuelleDuBus(myBus), getNomStation(getPtrData(myStation)));
 }
 
@@ -510,4 +347,205 @@ void afficheCoordonneesBus( Tbus myBus ){
 }
 
 
-//CrÈer ci-dessous vos fonctions
+//Cr√©er ci-dessous vos fonctions
+
+
+
+int lignesBus() {
+    FILE *f = fopen("Stations_et_lignesDeBus.data", "w");
+    if (!f) {
+        printf("Erreur cr√©ation fichier\n");
+        return 1;
+    }
+
+    fprintf(f, "ARRET;10;10;Charles de Gaulle;1\n");
+    fprintf(f, "TRONCON;1;1;2;412;412\n");
+    fprintf(f, "ARRET;300;400;Jules Ferry;2\n");
+    fprintf(f, "TRONCON;1;1;2;412;412\n");
+    fprintf(f, "ARRET;10;410;Jacques Brel;3\n");
+    fprintf(f, "TRONCON;1;2;3;40;160\n");
+    fprintf(f, "ARRET;200;350;Saint Exupery;4\n");
+    fprintf(f, "TRONCON;1;3;4;45;200\n");
+    fprintf(f, "ARRET;500;410;Stalingrad;5\n");
+    fprintf(f, "TRONCON;1;4;5;40;160\n");
+
+    fclose(f);
+    printf("Fichier cr√©√© avec succ√®s.\n");
+    return 0;
+}
+
+
+
+
+
+TlisteStation chargerLignes(Tbus monBus) {
+    FILE *f = fopen("Stations_et_lignesDeBus.data", "r");
+    TlisteStation newLigne;
+    initListe(&newLigne);
+    char ligne[256];
+    Tstation *tabStations[100] = {NULL};  // Table d‚Äôindexation des stations par ID
+
+    int idStationBus = -1;
+
+    if (!f) {
+        printf("Erreur ouverture fichier\n");
+        return newLigne;
+    }
+
+    while (fgets(ligne, sizeof(ligne), f)) {
+        if (strncmp(ligne, "ARRET", 5) == 0) {
+            int x, y, id;
+            char nom[100];
+            sscanf(ligne, "ARRET;%d;%d;%[^;];%d", &x, &y, nom, &id);
+
+            Tstation *arret = creeArret(x, y, nom, id);
+            tabStations[id] = arret;
+            newLigne = ajoutEnFin(newLigne, arret);
+        }
+        else if (strncmp(ligne, "TRONCON", 7) == 0) {
+            int idLigne, idDep, idArr, distance, duree;
+            sscanf(ligne, "TRONCON;%d;%d;%d;%d;%d", &idLigne, &idDep, &idArr, &distance, &duree);
+
+            Tstation *dep = tabStations[idDep];
+            Tstation *arr = tabStations[idArr];
+
+            if (dep != NULL && arr != NULL) {
+                Tstation *troncon = creeTroncon(idLigne, dep, arr, distance, duree);
+                newLigne = ajoutEnFin(newLigne, troncon);
+            } else {
+                printf("Erreur : station %d ou %d introuvable pour le tron√ßon.\n", idDep, idArr);
+            }
+        }
+        else if (strncmp(ligne, "BUS", 3) == 0) {
+            sscanf(ligne, "BUS;%d", &idStationBus);
+        }
+    }
+
+    fclose(f);
+
+    // Positionnement du bus si la station de d√©part est trouv√©e
+    if (idStationBus != -1) {
+        TlisteStation temp = newLigne;
+        while (temp != NULL) {
+            Tstation *s = temp->pdata;
+            if (getTypeNoeud(s) == ARRET && getIdStation(s) == idStationBus) {
+                setActualStation(monBus, temp);
+                setPosXBus(monBus, getPosXStation(s));
+                setPosYBus(monBus, getPosYStation(s));
+                break;
+            }
+            temp = temp->suiv;
+        }
+    }
+
+    return newLigne;
+}
+
+
+
+void sauvegarderLignes(TlisteStation ligne, Tbus monBus) {
+    FILE *f = fopen("Stations_et_lignesDeBus.data", "w");
+    if (!f) {
+        printf("Erreur ouverture fichier en √©criture\n");
+        return;
+    }
+    // Sauvegarde de la position du bus
+    TlisteStation posBus = getActualStation(monBus);
+    if (posBus && posBus->pdata) {
+        fprintf(f, "BUS;%d\n", getIdStation(posBus->pdata));
+    } else {
+        printf("Position du bus inconnue ou invalide\n");
+    }
+
+    fclose(f);
+}
+
+
+// Fonction permettant de construire une ligne de bus en reprenant les stations de deux
+// autres. Le d√©part sera celui de la premi√®re et le terminus sera celui de la seconde.
+TlisteStation fusionnerLignes(TlisteStation ligne1, TlisteStation ligne2) {
+    TlisteStation nouvelleLigne;
+    initListe(&nouvelleLigne);
+
+    // Ajouter toutes les stations de la premi√®re ligne (sauf la derni√®re)
+    TlisteStation temp1 = ligne1;
+    while (temp1 && temp1->suiv) {  // on garde tout sauf le dernier
+        Tstation *station = temp1->pdata;
+        nouvelleLigne = ajoutEnFin(nouvelleLigne, station);
+        temp1 = temp1->suiv;
+    }
+
+    // Ajouter toutes les stations de la seconde ligne (on inclut la derni√®re ici)
+    TlisteStation temp2 = ligne2;
+    while (temp2) {
+        Tstation *station = temp2->pdata;
+        nouvelleLigne = ajoutEnFin(nouvelleLigne, station);
+        temp2 = temp2->suiv;
+    }
+
+    return nouvelleLigne;
+}
+
+
+
+void supprimerStation(int idStationASupprimer) {
+    FILE *f = fopen("Stations_et_lignesDeBus.data", "r");
+    if (!f) {
+        printf("‚ùå Erreur ouverture fichier.\n");
+        return;
+    }
+
+    char lignes[1000][256];  // tableau pour stocker jusqu'√† 1000 lignes (adaptable)
+    int nbLignes = 0;
+
+    char ligne[256];
+    while (fgets(ligne, sizeof(ligne), f)) {
+        int keep = 1;
+
+        if (strncmp(ligne, "ARRET", 5) == 0) {
+            int x, y, id;
+            char nom[100];
+            sscanf(ligne, "ARRET;%d;%d;%[^;];%d", &x, &y, nom, &id);
+
+            if (id == idStationASupprimer) {
+                keep = 0;
+                printf("üóëÔ∏è Suppression ARRET %d (%s)\n", id, nom);
+            }
+        } else if (strncmp(ligne, "TRONCON", 7) == 0) {
+            int idLigne, idDep, idArr, distance, duree;
+            sscanf(ligne, "TRONCON;%d;%d;%d;%d;%d", &idLigne, &idDep, &idArr, &distance, &duree);
+
+            if (idDep == idStationASupprimer || idArr == idStationASupprimer) {
+                keep = 0;
+                printf("üóëÔ∏è Suppression TRONCON li√© √† la station %d\n", idStationASupprimer);
+            }
+        }
+
+        if (keep) {
+            strcpy(lignes[nbLignes++], ligne);
+        }
+    }
+
+    fclose(f);
+
+    // √âcriture directe dans le m√™me fichier (remplacement complet)
+    f = fopen("Stations_et_lignesDeBus.data", "w");
+    if (!f) {
+        printf("‚ùå Erreur r√©ouverture en √©criture.\n");
+        return;
+    }
+
+    for (int i = 0; i < nbLignes; i++) {
+        fputs(lignes[i], f);
+    }
+
+    fclose(f);
+    printf("‚úÖ Fichier mis √† jour, station %d supprim√©e.\n", idStationASupprimer);
+}
+
+
+
+
+
+
+
