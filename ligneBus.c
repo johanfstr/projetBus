@@ -94,9 +94,9 @@ TlisteStation chargerLignes(Tbus monBus) {
     TlisteStation newLigne;
     initListe(&newLigne);
     char ligne[256];
-    Tstation *tabStations[100] = {NULL};  // Pour stocker les stations par ID (1 à 99)
+    Tstation *tabStations[100] = {NULL};  // Table d’indexation des stations par ID
 
-    int idStationBus = -1;  // pour la position du bus
+    int idStationBus = -1;
 
     if (!f) {
         printf("Erreur ouverture fichier\n");
@@ -119,7 +119,8 @@ TlisteStation chargerLignes(Tbus monBus) {
 
             Tstation *dep = tabStations[idDep];
             Tstation *arr = tabStations[idArr];
-            if (dep && arr) {
+
+            if (dep != NULL && arr != NULL) {
                 Tstation *troncon = creeTroncon(idLigne, dep, arr, distance, duree);
                 newLigne = ajoutEnFin(newLigne, troncon);
             } else {
@@ -133,15 +134,15 @@ TlisteStation chargerLignes(Tbus monBus) {
 
     fclose(f);
 
-    // Si un idStationBus a été trouvé, on retrouve sa position dans la liste
+    // Positionnement du bus si la station de départ est trouvée
     if (idStationBus != -1) {
         TlisteStation temp = newLigne;
         while (temp != NULL) {
             Tstation *s = temp->pdata;
-            if (s->arret_ou_troncon == ARRET && s->idStation == idStationBus) {
+            if (getTypeNoeud(s) == ARRET && getIdStation(s) == idStationBus) {
                 setActualStation(monBus, temp);
-                setPosXBus(monBus, s->posX);
-                setPosYBus(monBus, s->posY);
+                setPosXBus(monBus, getPosXStation(s));
+                setPosYBus(monBus, getPosYStation(s));
                 break;
             }
             temp = temp->suiv;
@@ -152,36 +153,13 @@ TlisteStation chargerLignes(Tbus monBus) {
 }
 
 
+
 void sauvegarderLignes(TlisteStation ligne, Tbus monBus) {
     FILE *f = fopen("Stations_et_lignesDeBus.data", "w");
     if (!f) {
         printf("Erreur ouverture fichier en écriture\n");
         return;
     }
-
-    TlisteStation parcours = ligne;
-
-    while (parcours != NULL && parcours->pdata != NULL) {
-        Tstation *station = parcours->pdata;
-
-        if (station->arret_ou_troncon == ARRET) {
-            fprintf(f, "ARRET;%d;%d;%s;%d\n",
-                    station->posX,
-                    station->posY,
-                    station->nomStation,
-                    station->idStation);
-        } else if (station->arret_ou_troncon == TRONCON) {
-            fprintf(f, "TRONCON;%d;%d;%d;%d;%d\n",
-                    station->idLigneBus,
-                    station->depart->idStation,
-                    station->arrivee->idStation,
-                    station->coutDistance,
-                    station->coutTemps);
-        }
-
-        parcours = parcours->suiv;
-    }
-
     // Sauvegarde de la position du bus
     TlisteStation posBus = getActualStation(monBus);
     if (posBus && posBus->pdata) {
@@ -248,6 +226,11 @@ TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer) {
     printf("Station avec ID %d non trouvée.\n", idStationASupprimer);
     return ligne;
 }
+
+
+
+
+
 
 
 

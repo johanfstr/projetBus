@@ -2320,10 +2320,10 @@
 	<stdbool.h>
 	"types.h"
 
-1744633477 c:\users\chloe\onedrive\desktop\projetbus\types.h
+1745323047 c:\users\chloe\onedrive\desktop\projetbus\types.h
 	<stdbool.h>
 
-1745320347 source:c:\users\chloe\onedrive\desktop\projetbus\main.c
+1745419489 source:c:\users\chloe\onedrive\desktop\projetbus\main.c
 	"SDL.h"
 	"maSDL.h"
 	"SDL_VSYNC.h"
@@ -2765,7 +2765,7 @@
 	<stdbool.h>
 	"types.h"
 
-1745320621 source:c:\users\chloe\onedrive\desktop\projetbus\lignebus.c
+1745486239 source:c:\users\chloe\onedrive\desktop\projetbus\lignebus.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>

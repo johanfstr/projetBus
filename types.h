@@ -67,6 +67,7 @@ typedef struct{
     int posXBus, posYBus;                   //coord du bus pixel par pixel pour les trajets
     int idLigneBusActuelle;                 //un bus suit une ligne de bus à un instant t et peut en changer
     TsensParcours sensParcours;
+    int compteurTours; // ajouté
 } Typebus;
 
 typedef Typebus *Tbus;
