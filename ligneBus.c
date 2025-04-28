@@ -486,61 +486,71 @@ TlisteStation fusionnerLignes(TlisteStation ligne1, TlisteStation ligne2) {
     return nouvelleLigne;
 }
 
-
-
-void supprimerStation(int idStationASupprimer) {
-    FILE *f = fopen("Stations_et_lignesDeBus.data", "r");
-    if (!f) {
-        printf("❌ Erreur ouverture fichier.\n");
-        return;
+TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer) {
+    if (ligne == NULL) {
+        printf("La ligne est vide, rien à supprimer.\n");
+        return NULL;
     }
 
-    char lignes[1000][256];  // tableau pour stocker jusqu'à 1000 lignes (adaptable)
-    int nbLignes = 0;
+    TlisteStation courant = ligne;
+    while (courant != NULL) {
+        Tstation* station = courant->pdata;
 
-    char ligne[256];
-    while (fgets(ligne, sizeof(ligne), f)) {
-        int keep = 1;
+        if (station != NULL && station->arret_ou_troncon == ARRET && station->idStation == idStationASupprimer) {
+            printf("Suppression de la station : %s (id=%d)\n", station->nomStation, idStationASupprimer);
 
-        if (strncmp(ligne, "ARRET", 5) == 0) {
-            int x, y, id;
-            char nom[100];
-            sscanf(ligne, "ARRET;%d;%d;%[^;];%d", &x, &y, nom, &id);
+            // Supprimer les tronçons liés avant de supprimer la station
+            TlisteStation temp = ligne;
+            while (temp != NULL) {
+                Tstation* troncon = temp->pdata;
+                if (troncon != NULL && troncon->arret_ou_troncon == TRONCON) {
+                    if ((troncon->depart != NULL && troncon->depart->idStation == idStationASupprimer) ||
+                        (troncon->arrivee != NULL && troncon->arrivee->idStation == idStationASupprimer)) {
 
-            if (id == idStationASupprimer) {
-                keep = 0;
-                printf("🗑️ Suppression ARRET %d (%s)\n", id, nom);
+                        // Sauvegarde du suivant avant suppression
+                        TlisteStation aSupprimer = temp;
+                        temp = temp->suiv;
+
+                        printf("Suppression d'un tronçon lié à la station id=%d\n", idStationASupprimer);
+
+                        // Mise à jour des liens
+                        if (aSupprimer->prec != NULL)
+                            aSupprimer->prec->suiv = aSupprimer->suiv;
+                        if (aSupprimer->suiv != NULL)
+                            aSupprimer->suiv->prec = aSupprimer->prec;
+
+                        // Si le tronçon supprimé est la tête
+                        if (aSupprimer == ligne)
+                            ligne = aSupprimer->suiv;
+
+                        free(aSupprimer->pdata);
+                        free(aSupprimer);
+                        continue;
+                    }
+                }
+                temp = temp->suiv;
             }
-        } else if (strncmp(ligne, "TRONCON", 7) == 0) {
-            int idLigne, idDep, idArr, distance, duree;
-            sscanf(ligne, "TRONCON;%d;%d;%d;%d;%d", &idLigne, &idDep, &idArr, &distance, &duree);
 
-            if (idDep == idStationASupprimer || idArr == idStationASupprimer) {
-                keep = 0;
-                printf("🗑️ Suppression TRONCON lié à la station %d\n", idStationASupprimer);
-            }
+            // Après avoir supprimé les tronçons, supprimer la station elle-même
+            if (courant->prec != NULL)
+                courant->prec->suiv = courant->suiv;
+            if (courant->suiv != NULL)
+                courant->suiv->prec = courant->prec;
+
+            if (courant == ligne)
+                ligne = courant->suiv;
+
+            free(courant->pdata);
+            free(courant);
+
+            return ligne;  // On a tout nettoyé, fin
         }
 
-        if (keep) {
-            strcpy(lignes[nbLignes++], ligne);
-        }
+        courant = courant->suiv;
     }
 
-    fclose(f);
-
-    // Écriture directe dans le même fichier (remplacement complet)
-    f = fopen("Stations_et_lignesDeBus.data", "w");
-    if (!f) {
-        printf("❌ Erreur réouverture en écriture.\n");
-        return;
-    }
-
-    for (int i = 0; i < nbLignes; i++) {
-        fputs(lignes[i], f);
-    }
-
-    fclose(f);
-    printf("✅ Fichier mis à jour, station %d supprimée.\n", idStationASupprimer);
+    printf("Station avec id=%d non trouvée sur la ligne.\n", idStationASupprimer);
+    return ligne;  // Rien supprimé
 }
 
 

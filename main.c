@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
                 }
                 if ( pKeyStates[SDL_SCANCODE_4] ){
 
-                        printf("\nTouche 3, Bus au départ de la ligne 3\n");
+                        printf("\nTouche 4, Fusion de la ligne 2 et 3\n");
                         busSurStation(bus1, ligne4, depart_vers_arrivee);
                         Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus( bus1 ), getPosYBus( bus1 ), getIdFrame(frame));
                 }
@@ -145,8 +145,8 @@ int main(int argc, char* argv[])
                 }
                 if ( pKeyStates[SDL_SCANCODE_C] ){
 
-                        printf("\nTouche 3, Bus au départ de la ligne 3\n");
-                        supprimerStation(3);
+                        printf("\nTouche C, Suppression de la station id13\n");
+                        supprimerStation(ligne3, 13);
                         Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus(bus1), getPosYBus(bus1), getIdFrame(frame));
                 }
                 if ( pKeyStates[SDL_SCANCODE_ESCAPE] ){
