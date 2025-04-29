@@ -67,7 +67,9 @@ int main(int argc, char* argv[])
 
 
         //création d'un (seul) bus
-        Tbus bus1 = creeBus(1,ligne1);
+        Tbus bus1 = creeBus(1, ligne1);
+        Tbus bus2 = creeBus(2, ligne2);
+        Tbus bus3 = creeBus(3, ligne3);
 
         //affiche sur la console les stations et troncons des lignes de bus
         afficheConsoleLigneBus(ligne1);
@@ -97,6 +99,8 @@ int main(int argc, char* argv[])
                 //deplaceBus gère le déplacement du bus sur sa ligne, selon son sens du parcours de la ligne;
                 //met à jour les variations en X et Y pour déplacer le sprite du Bus (cf ligne 151)
                 deplaceBus(bus1, getSensParcours(bus1), &incXDeplSpriteBus1, &incYDeplSpriteBus1);
+
+
 
                 // afficheCoordonneesBus( bus1 );  //utile?
 
@@ -139,8 +143,8 @@ int main(int argc, char* argv[])
                 }
                 if ( pKeyStates[SDL_SCANCODE_5] ){
 
-                        printf("\nTouche 3, Bus au départ de la ligne 3\n");
-                        //busSurStation(bus1, ligne5, depart_vers_arrivee);
+                        printf("\nTouche 5, Bus devenu circulaire\n");
+                        rendreLigneCirculaire(ligne3);
                         Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus( bus1 ), getPosYBus( bus1 ), getIdFrame(frame));
                 }
                 if ( pKeyStates[SDL_SCANCODE_C] ){
