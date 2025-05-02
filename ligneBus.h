@@ -32,6 +32,14 @@ TlisteStation stationSuivantePourLeBus(Tbus myBus);
 void afficheCoordonneesBus( Tbus myBus );
 
 // ****   Lister ci-dessous vos fonctions  ****
+int lignesBus();
+void sauvegarderLignes(TlisteStation ligne, Tbus monBus);
+TlisteStation fusionnerLignes(TlisteStation ligne1, TlisteStation ligne2);
+TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer);
+void rendreLigneCirculaire(TlisteStation *ligne);
+int busSurTerminus(Tbus bus);
+void incrementerCompteur(int *compteur);
+void resetBusToStart(Tbus bus);
 
 
 #endif // LIGNEBUS_H_INCLUDED

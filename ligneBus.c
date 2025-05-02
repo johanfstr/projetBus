@@ -347,9 +347,6 @@ void afficheCoordonneesBus( Tbus myBus ){
 }
 
 
-//Créer ci-dessous vos fonctions
-
-
 
 int lignesBus() {
     FILE *f = fopen("Stations_et_lignesDeBus.data", "w");
@@ -374,21 +371,15 @@ int lignesBus() {
     return 0;
 }
 
-
-
-
-
 TlisteStation chargerLignes(Tbus monBus) {
     FILE *f = fopen("Stations_et_lignesDeBus.data", "r");
     TlisteStation newLigne;
     initListe(&newLigne);
     char ligne[256];
-    Tstation *tabStations[100] = {NULL};  // Table d’indexation des stations par ID
-
+    Tstation *tabStations[100] = {NULL};
     int idStationBus = -1;
 
     if (!f) {
-        printf("Erreur ouverture fichier\n");
         return newLigne;
     }
 
@@ -399,7 +390,7 @@ TlisteStation chargerLignes(Tbus monBus) {
             sscanf(ligne, "ARRET;%d;%d;%[^;];%d", &x, &y, nom, &id);
 
             Tstation *arret = creeArret(x, y, nom, id);
-            tabStations[id] = arret; // Stocker le pointeur d'arret dans le tableau
+            tabStations[id] = arret;
             newLigne = ajoutEnFin(newLigne, arret);
         }
         else if (strncmp(ligne, "TRONCON", 7) == 0) {
@@ -410,9 +401,8 @@ TlisteStation chargerLignes(Tbus monBus) {
             Tstation *arr = tabStations[idArr];
 
             if (dep != NULL && arr != NULL) {
-                // Normaliser distance et durée entre les stations
                 distance = calculerDistance(dep, arr);
-                duree = distance;  // Pour l'instant, temps = distance
+                duree = distance;
 
                 Tstation *troncon = creeTroncon(idLigne, dep, arr, distance, duree);
                 newLigne = ajoutEnFin(newLigne, troncon);
@@ -421,22 +411,20 @@ TlisteStation chargerLignes(Tbus monBus) {
             }
         }
         else if (strncmp(ligne, "BUS", 3) == 0) {
-            sscanf(ligne, "BUS;%d", &idStationBus); // Extraire l'id de la station de départ pour le bus
+            sscanf(ligne, "BUS;%d", &idStationBus);
         }
     }
 
     fclose(f);
 
-    // Positionnement du bus si la station de départ est trouvée
     if (idStationBus != -1) {
-        // Rechercher la station avec l'id correspondant
         TlisteStation temp = newLigne;
         while (temp != NULL) {
             Tstation *s = getPtrData(temp);
             if (getIdStation(s) == idStationBus) {
-                setActualStation(monBus, temp); // Positionner le bus sur la station
-                setPosXBus(monBus, getPosXStation(s)); // Initialiser la position X
-                setPosYBus(monBus, getPosYStation(s)); // Initialiser la position Y
+                setActualStation(monBus, temp);
+                setPosXBus(monBus, getPosXStation(s));
+                setPosYBus(monBus, getPosYStation(s));
                 break;
             }
             temp = temp->suiv;
@@ -451,7 +439,6 @@ TlisteStation chargerLignes(Tbus monBus) {
 void sauvegarderLignes(TlisteStation ligne, Tbus monBus) {
     FILE *f = fopen("Stations_et_lignesDeBus.data", "w");
     if (!f) {
-        printf("Erreur ouverture fichier en écriture\n");
         return;
     }
     // Sauvegarde de la position du bus
@@ -466,22 +453,19 @@ void sauvegarderLignes(TlisteStation ligne, Tbus monBus) {
 }
 
 
-// Fonction permettant de construire une ligne de bus en reprenant les stations de deux
-// autres. Le départ sera celui de la première et le terminus sera celui de la seconde.
+//Fusionne station en ayant pour depart la premiere et comme arrivé la seconde
 TlisteStation fusionnerLignes(TlisteStation ligne1, TlisteStation ligne2) {
     TlisteStation nouvelleLigne;
     initListe(&nouvelleLigne);
 
-    // Ajouter toutes les stations de la première ligne (sauf la dernière)
     TlisteStation temp1 = ligne1;
 
-    while (temp1 && temp1->suiv) {  // on garde tout sauf le dernier
+    while (temp1 && temp1->suiv) {
         Tstation *station = temp1->pdata;
         nouvelleLigne = ajoutEnFin(nouvelleLigne, station);
         temp1 = temp1->suiv;
     }
 
-    // Ajouter toutes les stations de la seconde ligne (on inclut la dernière ici)
     TlisteStation temp2 = ligne2;
     while (temp2) {
         Tstation *station = temp2->pdata;
@@ -494,18 +478,14 @@ TlisteStation fusionnerLignes(TlisteStation ligne1, TlisteStation ligne2) {
 
 TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer) {
     if (ligne == NULL) {
-        printf("La ligne est vide, rien à supprimer.\n");
         return NULL;
     }
-
     TlisteStation courant = ligne;
     while (courant != NULL) {
         Tstation* station = courant->pdata;
 
         if (station != NULL && station->arret_ou_troncon == ARRET && station->idStation == idStationASupprimer) {
-            printf("Suppression de la station : %s (id=%d)\n", station->nomStation, idStationASupprimer);
-
-            // Supprimer les tronçons liés avant de supprimer la station
+            //Supprimer tronçons liés avant de supprimer la station
             TlisteStation temp = ligne;
             while (temp != NULL) {
                 Tstation* troncon = temp->pdata;
@@ -513,11 +493,8 @@ TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer) {
                     if ((troncon->depart != NULL && troncon->depart->idStation == idStationASupprimer) ||
                         (troncon->arrivee != NULL && troncon->arrivee->idStation == idStationASupprimer)) {
 
-                        // Sauvegarde du suivant avant suppression
                         TlisteStation aSupprimer = temp;
                         temp = temp->suiv;
-
-                        printf("Suppression d'un tronçon lié à la station id=%d\n", idStationASupprimer);
 
                         // Mise à jour des liens
                         if (aSupprimer->prec != NULL)
@@ -526,8 +503,7 @@ TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer) {
                             aSupprimer->suiv->prec = aSupprimer->prec;
 
                         // Si le tronçon supprimé est la tête
-                        if (aSupprimer == ligne)
-                            ligne = aSupprimer->suiv;
+                        if (aSupprimer == ligne) ligne = aSupprimer->suiv;
 
                         free(aSupprimer->pdata);
                         free(aSupprimer);
@@ -537,45 +513,86 @@ TlisteStation supprimerStation(TlisteStation ligne, int idStationASupprimer) {
                 temp = temp->suiv;
             }
 
-            // Après avoir supprimé les tronçons, supprimer la station elle-même
-            if (courant->prec != NULL)
-                courant->prec->suiv = courant->suiv;
-            if (courant->suiv != NULL)
-                courant->suiv->prec = courant->prec;
+            //Après avoir supprimé les tronçons, supprimer la station elle-même
+            if (courant->prec != NULL) courant->prec->suiv = courant->suiv;
+            if (courant->suiv != NULL) courant->suiv->prec = courant->prec;
 
-            if (courant == ligne)
-                ligne = courant->suiv;
+            if (courant == ligne) ligne = courant->suiv;
 
             free(courant->pdata);
             free(courant);
 
-            return ligne;  // On a tout nettoyé, fin
+            return ligne;
         }
-
         courant = courant->suiv;
     }
-
-    printf("Station avec id=%d non trouvée sur la ligne.\n", idStationASupprimer);
-    return ligne;  // Rien supprimé
+    return ligne;
 }
 
-void rendreLigneCirculaire(TlisteStation ligne) {
-    if (ligne == NULL) {
-        printf("⚠️ Ligne vide, rien à rendre circulaire.\n");
+//Rend la ligne circulaire
+void rendreLigneCirculaire(TlisteStation *ligne) {
+    if (*ligne == NULL) {
         return;
     }
+    TlisteStation temp = *ligne;
 
-    TlisteStation premier = ligne;
-    TlisteStation dernier = ligne;
+    while (temp->suiv != NULL) {
+        temp = temp->suiv;
+    }
+    temp->suiv = *ligne;
+    (*ligne)->prec = temp;
+}
 
-    while (dernier->suiv != NULL) {
-        dernier = dernier->suiv;
+//Permet de savoir si le bus est au terminus
+int busSurTerminus(Tbus bus) {
+    if (bus == NULL) {
+        return 0;
+    }
+    TlisteStation position = bus->positionSurLaLigneDeBus;
+
+    if (position == NULL) {
+        return 0;
+    }
+    Tstation *premiereStation = position->pdata;
+    TlisteStation premierNoeud = bus->positionSurLaLigneDeBus->prec;
+
+    // On vérifie que la station actuel est la première ou la dernière
+    if (premierNoeud != NULL && getIdStation(premiereStation) == getIdStation(premierNoeud->pdata)) {
+        return 1;
+    }
+    TlisteStation temp = bus->positionSurLaLigneDeBus;
+
+    while (temp->suiv != NULL) {
+        temp = temp->suiv;
+    }
+    Tstation *derniereStation = temp->pdata;
+
+    if (getIdStation(premiereStation) == getIdStation(derniereStation)) {
+        printf("Le bus est au terminus (arrivée).\n");
+        return 1;
     }
 
-    // Relier dernier au premier
-    dernier->suiv = premier;
-    premier->prec = dernier;
+    return 0;
+}
 
-    printf("✅ Ligne rendue circulaire.\n");
+//Gère le compteur de tours
+void incrementerCompteur(int *compteur) {
+    (*compteur)++;
+    printf("Compteur de tours: %d\n", *compteur);
+}
+
+//Remet le bus au point de depart de la ligne
+void resetBusToStart(Tbus bus) {
+    if (bus == NULL) {
+        return;
+    }
+    //Position du bus sur la ligne
+    TlisteStation ligne = bus->positionSurLaLigneDeBus;
+
+    if (ligne == NULL) {
+        return;
+    }
+    Tstation *premiereStation = ligne->pdata;
+    setPositionSurLaLigneDeBus(bus, premiereStation);
 }
 

@@ -1,5 +1,5 @@
-//NOM prénom étudiant 1 :
-//NOM prénom étudiant 2 :
+//NOM prénom étudiant 1 : FORESTIER Johan
+//NOM prénom étudiant 2 : GUTHOERL Auderick
 
 #include "SDL.h"
 #include "maSDL.h"
@@ -67,9 +67,7 @@ int main(int argc, char* argv[])
 
 
         //création d'un (seul) bus
-        Tbus bus1 = creeBus(1, ligne1);
-        Tbus bus2 = creeBus(2, ligne2);
-        Tbus bus3 = creeBus(3, ligne3);
+        Tbus bus1 = creeBus(1,ligne1);
 
         //affiche sur la console les stations et troncons des lignes de bus
         afficheConsoleLigneBus(ligne1);
@@ -78,6 +76,9 @@ int main(int argc, char* argv[])
 
         //Current animation frame
         int frame = 0;
+
+        // Compteur de tours
+        int compteurTours = 0;
 
         //affiche et initialise le sprite du bus au départ
         Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus( bus1 ), getPosYBus( bus1 ), getIdFrame(frame));
@@ -99,8 +100,6 @@ int main(int argc, char* argv[])
                 //deplaceBus gère le déplacement du bus sur sa ligne, selon son sens du parcours de la ligne;
                 //met à jour les variations en X et Y pour déplacer le sprite du Bus (cf ligne 151)
                 deplaceBus(bus1, getSensParcours(bus1), &incXDeplSpriteBus1, &incYDeplSpriteBus1);
-
-
 
                 // afficheCoordonneesBus( bus1 );  //utile?
 
@@ -143,8 +142,8 @@ int main(int argc, char* argv[])
                 }
                 if ( pKeyStates[SDL_SCANCODE_5] ){
 
-                        printf("\nTouche 5, Bus devenu circulaire\n");
-                        rendreLigneCirculaire(ligne3);
+                        printf("\nTouche 3, Bus au départ de la ligne 3\n");
+                        //busSurStation(bus1, ligne5, depart_vers_arrivee);
                         Affiche_Sprite(&gSpriteBus, gRenderer, getPosXBus( bus1 ), getPosYBus( bus1 ), getIdFrame(frame));
                 }
                 if ( pKeyStates[SDL_SCANCODE_C] ){
@@ -158,7 +157,12 @@ int main(int argc, char* argv[])
                         printf("\nTouche ECHAP");
                         cont = 0;  //sortie de la boucle
                 }
-
+                /*
+                if (busSurTerminus(bus1)) {
+                    incrementerCompteur(&compteurTours);
+                    resetBusToStart(bus1); // Repositionner le bus au début de la ligne
+                }
+                */
 
                 //affichage du jeu à chaque tour
 
@@ -178,11 +182,11 @@ int main(int argc, char* argv[])
 
                 SDL_Delay(1); //valeur du délai modifiable en fonction de votre CPU
                 ++frame;
-            }
+
         //fin boucle du jeu
+            }
         }
 	}
-
 
 	//Free resources and close SDL
 	free_Ltexture(&gSpriteBus);
